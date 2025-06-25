@@ -20,19 +20,35 @@ def get_db_connection():
         return None
 
 
+from datetime import date, time, timedelta
+
 @app.route('/working_hours', methods=['GET'])
 def get_working_hours():
     conn = get_db_connection()
     if conn is None:
         return jsonify({'error': 'Kan inte ansluta till databasen!'}), 500
-    
+
     cur = conn.cursor()
     cur.execute("SELECT * FROM working_hours")
     rows = cur.fetchall()
+    colnames = [desc[0] for desc in cur.description]
+
+    result = []
+    for row in rows:
+        row_dict = {}
+        for i in range(len(colnames)):
+            value = row[i]
+            if isinstance(value, (date, time, timedelta)):
+                row_dict[colnames[i]] = str(value)
+            else:
+                row_dict[colnames[i]] = value
+        result.append(row_dict)
+
     cur.close()
     conn.close()
 
-    return jsonify(rows)
+    return jsonify(result)
+
 
 @app.route('/working_hours', methods=['POST'])
 def add_working_hours():
