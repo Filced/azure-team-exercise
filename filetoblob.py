@@ -1,7 +1,7 @@
 #import os
 #account_key = os.environ.get("AZURE_ACC_KEY")
 #if not account_key:
- #   raise EnvironmentError(" AZURE_ACC_KEY är inte satt som miljövariabel.")
+#   raise EnvironmentError(" AZURE_ACC_KEY är inte satt som miljövariabel.")
 
 from azure.storage.blob import BlobServiceClient
 
