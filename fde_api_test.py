@@ -119,5 +119,48 @@ def delete_working_hours(id):
 
     return jsonify({'message': f'Arbetsrad med id {id} raderad'}), 200
 
+@app.route('/working_hours/report', methods=['GET'])
+def working_hours_report():
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({'error': 'Kan inte ansluta till databasen'}), 500
+
+    cur = conn.cursor()
+
+    try:
+        cur.execute("""
+        SELECT 
+        consultantname,
+        customername,
+        date,
+        SUM(EXTRACT(EPOCH FROM (endtime - starttime)) / 3600 - EXTRACT(EPOCH FROM lunchbreak) / 3600.0) AS total_hours
+        FROM working_hours
+        GROUP BY consultantname, customername, date
+        ORDER BY consultantname, date;
+        """)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    rows = cur.fetchall()
+
+    report = []
+    for row in rows:
+        consultant, customer, date_value, total_hours = row
+        report.append({
+            "consultant": consultant,
+            "customer": customer,
+            "date": str(date_value),
+            "total_hours": round(total_hours, 2)
+        })
+
+    cur.close()
+    conn.close()
+
+    return jsonify({
+        "message": "This report contains daily total working hours by consultant and by customer",
+        "report": report
+    })
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
