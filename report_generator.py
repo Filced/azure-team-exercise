@@ -29,6 +29,11 @@ def generate_report():
     df['week'] = df['date'].dt.isocalendar().week
     weekly = df.groupby(['consultantname', 'week'])['worked_hours'].sum().reset_index()
 
+    cumulative_df = df.groupby(['consultantname', 'customername'])['worked_hours'].sum().reset_index()
+
+    average_df = df.groupby(['consultantname'])['worked_hours'].mean().reset_index()
+    average_df.rename(columns={'worked_hours': 'average_hours'}, inplace=True)
+
     with open("rapport.txt", "w") as f:
         f.write("Daglig tid:\n")
         for _, row in daily.iterrows():
@@ -38,7 +43,13 @@ def generate_report():
         for _, row in weekly.iterrows():
             f.write(f"Vecka {row['week']} - {row['consultantname']}: {row['worked_hours']:.2f} timmar\n")
 
+        f.write('\nTotala timmar per konsult/kund\n')
+        for _, row in cumulative_df.iterrows():
+            f.write(f"{row['consultantname']} - {row['customername']}: {row['worked_hours']} timmar\n")
 
+        f.write('\nGenomsnittliga timmar/dag\n')
+        for _, row in average_df.iterrows():
+            f.write(f"{row['consultantname']}: {row['average_hours']} timmar\n")
 
     print("Rapport skapad som rapport.txt")
 
